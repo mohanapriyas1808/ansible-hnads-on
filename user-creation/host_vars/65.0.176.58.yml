@@ -1,0 +1,17 @@
+users_to_create:
+  john:
+    password_rotation_days: 1
+    sudo_access: true
+    sudo_commands: ["ALL"]
+    password: "john123"
+    file_permissions:
+      home_dir: "750"  # rwxr-x---
+      config_files: "600"  # rw-------
+      scripts: "700"  # rwx------
+      logs: "600"  # rw-------
+
+default_shell: "/bin/bash"
+sudo_group: "sudo"
+home_directory: yes
+
+
