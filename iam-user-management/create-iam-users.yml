@@ -1,0 +1,49 @@
+---
+- name: Manage AWS IAM Users
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - iam-users-vars.yml
+    - iam-passwords-vault.yml
+        
+  tasks:
+    - name: Create IAM users
+      amazon.aws.iam_user:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ iam_users.keys() }}"
+
+    - name: Create login profile with password
+      amazon.aws.iam_user:
+        name: "{{ item }}"
+        password: "{{ iam_passwords[item] }}"
+        update_password: always
+        state: present
+      loop: "{{ iam_users.keys() }}"
+
+    - name: Attach policies to users
+      amazon.aws.iam_user:
+        name: "{{ item.key }}"
+        managed_policies: "{{ item.value.policies }}"
+        state: present
+      loop: "{{ iam_users | dict2items }}"
+
+    - name: Set account password policy
+      amazon.aws.iam_password_policy:
+        min_pw_length: "{{ password_policy.min_pw_length }}"
+        require_symbols: "{{ password_policy.require_symbols }}"
+        require_numbers: "{{ password_policy.require_numbers }}"
+        require_uppercase: "{{ password_policy.require_uppercase }}"
+        require_lowercase: "{{ password_policy.require_lowercase }}"
+        allow_pw_change: "{{ password_policy.allow_pw_change }}"
+        pw_max_age: "{{ password_policy.max_pw_age }}"
+        pw_reuse_prevent: "{{ password_policy.pw_reuse_prevent }}"
+        state: present
+
+    - name: Save IAM passwords to file
+      lineinfile:
+        path: "/tmp/iam_user_passwords.txt"
+        line: "{{ item }}: {{ iam_passwords[item] }}"
+        create: yes
+        mode: '0600'
+      loop: "{{ iam_users.keys() }}"
