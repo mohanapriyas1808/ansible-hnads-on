@@ -1,0 +1,65 @@
+---
+- name: Manage Users
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create users
+      user:
+        name: "{{ item }}"
+        groups: "{{ sudo_group if users_to_create[item].sudo_access else 'users' }}"
+        shell: "{{ default_shell }}"
+        create_home: "{{ home_directory }}"
+        password: "{{ users_to_create[item].password | password_hash('sha512') }}"
+        update_password: on_create
+      loop: "{{ users_to_create.keys() }}"
+
+    - name: Configure sudo permissions
+      lineinfile:
+        path: /etc/sudoers.d/{{ item }}
+        line: "{{ item }} ALL=(ALL) NOPASSWD: {{ users_to_create[item].sudo_commands | join(', ') }}"
+        create: yes
+        mode: '0440'
+      loop: "{{ users_to_create.keys() }}"
+      when: users_to_create[item].sudo_access
+
+    - name: Set password expiry
+      shell: "chage -M {{ users_to_create[item].password_rotation_days }} {{ item }}"
+      loop: "{{ users_to_create.keys() }}"
+
+    - name: Set home directory permissions
+      file:
+        path: "/home/{{ item }}"
+        mode: "{{ users_to_create[item].file_permissions.home_dir }}"
+        owner: "{{ item }}"
+        group: "{{ item }}"
+      loop: "{{ users_to_create.keys() }}"
+
+    - name: Enable password authentication in SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        backup: yes
+      notify: restart ssh
+
+    - name: Enable password authentication in cloud-init config
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        backup: yes
+      notify: restart ssh
+
+    - name: Save passwords to file
+      lineinfile:
+        path: "/tmp/user_passwords.txt"
+        line: "{{ item }}: {{ users_to_create[item].password }}"
+        create: yes
+        mode: '0600'
+      loop: "{{ users_to_create.keys() }}"
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
