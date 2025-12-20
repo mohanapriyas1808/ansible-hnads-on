@@ -1,0 +1,15 @@
+users_to_create:
+  alice:
+    password_rotation_days: 30
+    sudo_access: true
+    sudo_commands: ["ALL"]
+    password: "alice456"
+    file_permissions:
+      home_dir: "755"  # rwxr-xr-x
+      config_files: "644"  # rw-r--r--
+      scripts: "755"  # rwxr-xr-x
+      logs: "640"  # rw-r-----
+
+default_shell: "/bin/bash"
+sudo_group: "sudo"
+home_directory: yes
