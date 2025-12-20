@@ -1,0 +1,32 @@
+---
+- name: Install Software
+  hosts: all
+  become: yes
+  vars_files:
+    - package-mapping.yml
+  tasks:
+    - name: Add repositories
+      shell: "{{ repositories[item][ansible_os_family] }}"
+      args:
+        creates: "/etc/apt/sources.list.d/{{ item }}.list"
+      loop: "{{ software_packages.keys() }}"
+      when: 
+        - software_packages[item].repo_required is defined
+        - software_packages[item].repo_required
+        - repositories[item][ansible_os_family] is defined
+
+    - name: Install packages
+      package:
+        name: "{{ software_packages[item][ansible_os_family] | replace('{{version}}', software_packages[item].version) }}"
+        state: present
+      loop: "{{ software_packages.keys() }}"
+      when: software_packages[item][ansible_os_family] is defined
+
+    - name: Start and enable services
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop: "{{ software_packages.keys() }}"
+      when: software_packages[item].service is defined and software_packages[item].service
+      ignore_errors: yes
