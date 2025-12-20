@@ -1,0 +1,29 @@
+# Global password policy settings
+password_policy:
+  min_pw_length: 12
+  require_symbols: true
+  require_numbers: true
+  require_uppercase: true
+  require_lowercase: true
+  allow_pw_change: true
+  max_pw_age: 90
+  pw_reuse_prevent: 5
+
+iam_users:
+  john_dev:
+    password_max_age: 90
+    require_password_change: true
+    policies:
+      - "ReadOnlyAccess"
+      - "IAMReadOnlyAccess"
+  alice_admin:
+    password_max_age: 30
+    require_password_change: true
+    policies:
+      - "ReadOnlyAccess"
+      - "IAMReadOnlyAccess"
+  bob_readonly:
+    password_max_age: 180
+    require_password_change: false
+    policies:
+      - "ReadOnlyAccess"
