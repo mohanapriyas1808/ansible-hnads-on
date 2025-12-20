@@ -1,0 +1,26 @@
+repositories:
+  nodejs:
+    Debian: "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -"
+    RedHat: "curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -"
+  docker:
+    Debian: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable' | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && sudo apt update"
+
+software_packages:
+  docker:
+    version: "latest"
+    Debian: "docker-ce"
+    RedHat: "docker-ce"
+    service: true
+    repo_required: true
+  nginx:
+    version: "latest"
+    Debian: "nginx"
+    RedHat: "nginx"
+    service: true
+    repo_required: false
+  nodejs:
+    version: "latest"
+    Debian: "nodejs"
+    RedHat: "nodejs npm"
+    service: false
+    repo_required: true
